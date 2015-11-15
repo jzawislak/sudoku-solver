@@ -1,2 +1,2 @@
 # sudoku-solver
-Aplikacja rozwi¹zuje ³amig³ówkê SUDOKU algorytmem heurystycznym "Symulowane wy¿arzanie".
+Aplikacja rozwiÄ…zuje Å‚amigÅ‚Ã³wkÄ™ SUDOKU algorytmem heurystycznym "Symulowane wyÅ¼arzanie".
