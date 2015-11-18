@@ -31,7 +31,7 @@ public class SudokuParser {
                 }
             }
         }
-        sudoku.setFieldsArray(fieldsArray);
+        sudoku.setFieldsArrayAndCopy(fieldsArray);
         LOGGER.info("Sudoku loaded \n" + sudoku);
 
         return sudoku;

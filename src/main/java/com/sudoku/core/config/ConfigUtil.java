@@ -71,4 +71,8 @@ public class ConfigUtil {
         }
         return result;
     }
+
+    public static Double getDouble(String propertyName) {
+        return config.getDouble(propertyName);
+    }
 }

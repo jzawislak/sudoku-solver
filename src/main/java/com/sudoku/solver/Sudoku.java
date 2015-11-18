@@ -1,8 +1,13 @@
 package com.sudoku.solver;
 
+import org.apache.log4j.Logger;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -12,17 +17,35 @@ public class Sudoku {
     public static final int SUDOKU_SIZE = 9;
     public static final int SUDOKU_SQUARE_SIZE = 3;
     public static final int SUDOKU_EMPTY_FIELD = 0;
+    private static Logger LOGGER = Logger.getLogger(Sudoku.class);
     /**
      * 2d tablica reprezentująca pola sudoku.
      */
-    int[][] fieldsArray;
+    int[][] fieldsArray = new int[SUDOKU_SIZE][SUDOKU_SIZE];
+    /**
+     * Zbiór reprezentujący puste pola sudoku w oryginalnym, nieuzupełnionym sudoku.
+     */
+    List<Integer> emptyfieldsSet = new ArrayList<>();
+    /**
+     * Pomocniczy obiekt do losowania sąsiadów.
+     */
+    private Random random = new Random(System.currentTimeMillis());
 
     public int[][] getFieldsArray() {
         return fieldsArray;
     }
 
-    public void setFieldsArray(int[][] fieldsArray) {
+    public void setFieldsArrayAndCopy(int[][] fieldsArray) {
         this.fieldsArray = fieldsArray;
+        //Zapisanie listy pustych pól.
+        fieldsArray = new int[Sudoku.SUDOKU_SIZE][Sudoku.SUDOKU_SIZE];
+        for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
+            for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
+                if (fieldsArray[i][j] == SUDOKU_EMPTY_FIELD) {
+                    emptyfieldsSet.add(i * 10 + j);
+                }
+            }
+        }
     }
 
     /**
@@ -67,17 +90,54 @@ public class Sudoku {
      * tak aby w całym sudoku każda wartość występowała poprawną liczbę razy.
      */
     public void init() {
-        //TODO dokończyć
+        Map<Integer, Integer> numberMap = new HashMap<>();
+        //policzenie liczby występujacych cyfr
+        for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
+            for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
+                if (numberMap.get(fieldsArray[i][j]) == null) {
+                    numberMap.put(fieldsArray[i][j], 0);
+                }
+                numberMap.put(fieldsArray[i][j], numberMap.get(fieldsArray[i][j]) + 1);
+            }
+        }
+        //zastąpienie wszystkich zer
+        int k = 1;
+        for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
+            for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
+                if (fieldsArray[i][j] == SUDOKU_EMPTY_FIELD) {
+                    for (; k <= 9; k++) {
+                        if (numberMap.get(k) < SUDOKU_SIZE) {
+                            fieldsArray[i][j] = k;
+                            numberMap.put(k, numberMap.get(k) + 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
      * Zwraca sąsiada, który jest wynikiem zamiany dwóch losowych pól.
      *
-     * @return losow sąsiad
+     * @return losowy sąsiad
      */
+    //TODO być może da się zopytamalizować, metoda wywoływana jest dosyć często
     public Sudoku getNeighbour() {
-        //TODO dokończyć
-        return new Sudoku();
+        int first = random.nextInt(emptyfieldsSet.size());
+        int second = random.nextInt(emptyfieldsSet.size());
+
+        int row1 = Integer.valueOf(emptyfieldsSet.get(first) / 10);
+        int row2 = Integer.valueOf(emptyfieldsSet.get(second) / 10);
+        int col1 = Integer.valueOf(emptyfieldsSet.get(first) % 10);
+        int col2 = Integer.valueOf(emptyfieldsSet.get(second) % 10);
+
+        Sudoku result = this.makeCopy();
+        int old = result.fieldsArray[row1][col1];
+        result.fieldsArray[row1][col1] = result.fieldsArray[row2][col2];
+        result.fieldsArray[row2][col2] = old;
+
+        return result;
     }
 
     /***
@@ -93,5 +153,19 @@ public class Sudoku {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    public Sudoku makeCopy() {
+        Sudoku sudoku = new Sudoku();
+        //zbiór oryginalny nie ulega potem zmianie
+        sudoku.emptyfieldsSet = emptyfieldsSet;
+
+        //kopia pól
+        for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
+            for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
+                sudoku.fieldsArray[i][j] = this.fieldsArray[i][j];
+            }
+        }
+        return sudoku;
     }
 }
