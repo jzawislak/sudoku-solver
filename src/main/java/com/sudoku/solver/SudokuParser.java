@@ -1,4 +1,5 @@
 package com.sudoku.solver;
+
 import org.apache.log4j.Logger;
 
 import java.io.FileInputStream;
@@ -19,7 +20,6 @@ public class SudokuParser {
      * @return twczytane sudoku
      */
     public static Sudoku parseSudokuFromFile(String filename) {
-        Sudoku sudoku = new Sudoku();
         int[][] fieldsArray = new int[Sudoku.SUDOKU_SIZE][Sudoku.SUDOKU_SIZE];
         InputStream inputStream = readFileAsStream(filename);
 
@@ -31,7 +31,8 @@ public class SudokuParser {
                 }
             }
         }
-        sudoku.setFieldsArrayAndCopy(fieldsArray);
+
+        Sudoku sudoku = new Sudoku(fieldsArray);
         LOGGER.info("Sudoku loaded \n" + sudoku);
 
         return sudoku;

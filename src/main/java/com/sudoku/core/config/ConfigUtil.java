@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Klasa zarządzająca plikami konfiguracyjnymi.
@@ -74,5 +75,9 @@ public class ConfigUtil {
 
     public static Double getDouble(String propertyName) {
         return config.getDouble(propertyName);
+    }
+
+    public static List<Integer> getIntList(String propertyName) {
+        return config.getIntList(propertyName);
     }
 }

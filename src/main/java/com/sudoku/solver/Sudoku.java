@@ -3,6 +3,7 @@ package com.sudoku.solver;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,18 +32,31 @@ public class Sudoku {
      */
     private Random random = new Random(System.currentTimeMillis());
 
-    public int[][] getFieldsArray() {
-        return fieldsArray;
+    /**
+     * @param fieldsArray tablica reprezentująca początkowy stan sudoku.
+     */
+    public Sudoku(int[][] fieldsArray) {
+        this.setFieldsArrayAndEmptyFields(fieldsArray);
     }
 
-    public void setFieldsArrayAndCopy(int[][] fieldsArray) {
-        this.fieldsArray = fieldsArray;
-        //Zapisanie listy pustych pól.
-        fieldsArray = new int[Sudoku.SUDOKU_SIZE][Sudoku.SUDOKU_SIZE];
+    /**
+     * Używany jedynie w tej klasie do tworzenia kopii Sudoku.
+     */
+    private Sudoku() {
+    }
+
+    /**
+     * Przepisuje tablicę sudoku oraz zapisuje listę pustych pul.
+     *
+     * @param fieldsArray tablica reprezentujaca początkowy stan sudoku.
+     */
+    private void setFieldsArrayAndEmptyFields(int[][] fieldsArray) {
+        this.fieldsArray = new int[Sudoku.SUDOKU_SIZE][Sudoku.SUDOKU_SIZE];
         for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
             for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
-                if (fieldsArray[i][j] == SUDOKU_EMPTY_FIELD) {
-                    emptyfieldsSet.add(i * 10 + j);
+                this.fieldsArray[i][j] = fieldsArray[i][j];
+                if (this.fieldsArray[i][j] == SUDOKU_EMPTY_FIELD) {
+                    this.emptyfieldsSet.add(i * 10 + j);
                 }
             }
         }
@@ -89,7 +103,7 @@ public class Sudoku {
      * Inicjalizuje niewypełnione pola reprezentowane przez {@link Sudoku#SUDOKU_EMPTY_FIELD}
      * tak aby w całym sudoku każda wartość występowała poprawną liczbę razy.
      */
-    public void init() {
+    public void initEmptyFields() {
         Map<Integer, Integer> numberMap = new HashMap<>();
         //policzenie liczby występujacych cyfr
         for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
@@ -158,7 +172,8 @@ public class Sudoku {
     public Sudoku makeCopy() {
         Sudoku sudoku = new Sudoku();
         //zbiór oryginalny nie ulega potem zmianie
-        sudoku.emptyfieldsSet = emptyfieldsSet;
+        sudoku.emptyfieldsSet = new ArrayList<>(this.emptyfieldsSet);
+        Collections.copy(sudoku.emptyfieldsSet, this.emptyfieldsSet);
 
         //kopia pól
         for (int i = 0; i < Sudoku.SUDOKU_SIZE; ++i) {
@@ -166,6 +181,40 @@ public class Sudoku {
                 sudoku.fieldsArray[i][j] = this.fieldsArray[i][j];
             }
         }
+        return sudoku;
+    }
+
+    /**
+     * Czy sudoku było oryginalnie całkowicie uzupełnione.
+     */
+    public boolean wasSolved() {
+        return emptyfieldsSet.isEmpty();
+    }
+
+    /**
+     * Zwraca nowe sudoku z częściowo usuniętymi polami.
+     *
+     * @param percentageToRemove procentowa liczba pól do usunięcia
+     * @return nowe sudoku bez części pol
+     */
+    public Sudoku getNewWithFieldsRemoved(int percentageToRemove) {
+        if (!this.wasSolved()) {
+            LOGGER.error("Nie można usuwać pól z nierozwiązanego sudoku.");
+            return null;
+        }
+        Sudoku sudoku = this.makeCopy();
+        int toBeRemoved = Sudoku.SUDOKU_SIZE * Sudoku.SUDOKU_SIZE * percentageToRemove / 100;
+
+        while (toBeRemoved > 0) {
+            int row = random.nextInt(SUDOKU_SIZE);
+            int col = random.nextInt(SUDOKU_SIZE);
+            if (sudoku.fieldsArray[row][col] != SUDOKU_EMPTY_FIELD) {
+                sudoku.fieldsArray[row][col] = 0;
+                sudoku.emptyfieldsSet.add(row * 10 + col);
+                toBeRemoved--;
+            }
+        }
+
         return sudoku;
     }
 }
