@@ -10,7 +10,8 @@ public enum ConfigEnum {
     ALFA("alfa"),
     TAU("tau"),
     TRYB("tryb"),
-    POZIOMY_TRUDNOSCI("poziomy_trudnosci");
+    POZIOMY_TRUDNOSCI("poziomy_trudnosci"),
+    ILOSC_TESTOW("ilosc_testow");
 
     private final String value;
 

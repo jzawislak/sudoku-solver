@@ -31,7 +31,12 @@ public class SudokuParser {
                 }
             }
         }
-
+        try {
+            inputStream.close();
+        } catch (IOException e) {
+            //zignoruj
+        }
+        scanner.close();
         Sudoku sudoku = new Sudoku(fieldsArray);
         LOGGER.info("Sudoku loaded \n" + sudoku);
 

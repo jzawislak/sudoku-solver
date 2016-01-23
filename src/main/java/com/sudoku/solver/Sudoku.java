@@ -120,6 +120,10 @@ public class Sudoku {
             for (int j = 0; j < Sudoku.SUDOKU_SIZE; ++j) {
                 if (fieldsArray[i][j] == SUDOKU_EMPTY_FIELD) {
                     for (; k <= 9; k++) {
+                        //sprawdzenie bo część liczb mogła w ogóle nie występować
+                        if (numberMap.get(k) == null) {
+                            numberMap.put(k, 0);
+                        }
                         if (numberMap.get(k) < SUDOKU_SIZE) {
                             fieldsArray[i][j] = k;
                             numberMap.put(k, numberMap.get(k) + 1);
@@ -202,6 +206,8 @@ public class Sudoku {
             LOGGER.error("Nie można usuwać pól z nierozwiązanego sudoku.");
             return null;
         }
+        //random zawsze bedzie usuwal te same pola
+        Random random = new Random(0);
         Sudoku sudoku = this.makeCopy();
         int toBeRemoved = Sudoku.SUDOKU_SIZE * Sudoku.SUDOKU_SIZE * percentageToRemove / 100;
 

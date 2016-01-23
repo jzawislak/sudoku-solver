@@ -2,6 +2,7 @@ package com.sudoku.solver;
 
 import com.sudoku.core.config.enums.ConfigEnum;
 import com.sudoku.core.config.ConfigUtil;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class SudokuSolver {
      */
     public SudokuResult solveSingleSudoku() {
         Sudoku sudoku = SudokuParser.parseSudokuFromFile(ConfigUtil.getString(ConfigEnum.SUDOKU_FILE.getValue()));
-        return this.solveSudoku(sudoku);
+        return this.solveSudoku(sudoku, Level.DEBUG);
     }
 
     /**
@@ -27,12 +28,15 @@ public class SudokuSolver {
      *
      * @return informacje pomocnicze o przebiegu rozwiązania
      */
-    private SudokuResult solveSudoku(Sudoku sudoku) {
-        LOGGER.info("Sudoku początkowe:\n" + sudoku);
-        LOGGER.info("Koszt początkowy: " + sudoku.cost());
+    private SudokuResult solveSudoku(Sudoku sudoku, Level level) {
+        LOGGER.setLevel(level);
+        LOGGER.debug("Sudoku początkowe:\n" + sudoku);
+        LOGGER.debug("Koszt początkowy: " + sudoku.cost());
+        //kopia aby nie zmieniać sudoku podanego jako argument
+        sudoku = sudoku.makeCopy();
         sudoku.initEmptyFields();
-        LOGGER.info("Zainicjalizowane:\n" + sudoku.toString());
-        LOGGER.info("Rozpoczęcie rozwiązywania, proszę czekać.");
+        LOGGER.trace("Zainicjalizowane:\n" + sudoku.toString());
+        LOGGER.debug("Rozpoczęcie rozwiązywania, proszę czekać.");
 
         int outerIterations = ConfigUtil.getInt(ConfigEnum.ITERACJE_ZWEN.getValue());
         int innerIterations = ConfigUtil.getInt(ConfigEnum.ITERACJE_WEWN.getValue());
@@ -41,15 +45,17 @@ public class SudokuSolver {
         int allIterations = 0;
 
         for (int i = 0; i < outerIterations; i++) {
-            LOGGER.debug("Iteracja zewnętrzna " + i + ". Obecny koszt:" + sudoku.cost());
+            LOGGER.trace("Iteracja zewnętrzna " + i + ". Obecny koszt:" + sudoku.cost());
             for (int j = 0; j < innerIterations; j++) {
                 Sudoku neighbour = sudoku.getNeighbour();
                 int newCost = neighbour.cost();
                 double sigma = newCost - sudoku.cost();
                 if (newCost == 0) {
                     sudoku = neighbour;
-                    LOGGER.info("Rozwiazano, wynik:\n" + sudoku.toString());
-                    LOGGER.info("Ilosc iteracji: " + allIterations);
+                    LOGGER.debug("Rozwiazano, wynik:\n" + sudoku.toString());
+                    LOGGER.info("Rozwiązanie znaleziono po liczbie iteracji: " + allIterations);
+                    //System.out.print(allIterations);
+                    //System.out.print(" \n");
                     return new SudokuResult(true, i, j, allIterations, sudoku);
                 } else if (sigma < 0) {
                     sudoku = neighbour;
@@ -61,6 +67,7 @@ public class SudokuSolver {
             tau = tau * alfa;
         }
         LOGGER.info("Brak rozwiązania.");
+        //System.out.print("brak \n");
         return new SudokuResult(false, outerIterations, innerIterations, allIterations, sudoku);
     }
 
@@ -87,7 +94,20 @@ public class SudokuSolver {
         for (Integer difficulty : difficultyList) {
             LOGGER.info("Test dla poziomu trudności " + difficulty);
             Sudoku difficultSudoku = sudoku.getNewWithFieldsRemoved(difficulty);
-            this.solveSudoku(difficultSudoku);
+            int numberOfTests = ConfigUtil.getInt(ConfigEnum.ILOSC_TESTOW.getValue(), 1);
+            long summaryNumberOfIterations = 0;
+            int numberOfFailures = 0;
+            for (int i = 0; i < numberOfTests; i++) {
+                Level level = i == 0 ? Level.DEBUG : Level.INFO;
+                SudokuResult sudokuResult = this.solveSudoku(difficultSudoku, level);
+                if(sudokuResult.isSuccess) {
+                    summaryNumberOfIterations += sudokuResult.allIterations;
+                } else {
+                    numberOfFailures++;
+                }
+            }
+            LOGGER.info("Srednia liczba iteracji: " + (float) summaryNumberOfIterations/(numberOfTests - numberOfFailures));
+            LOGGER.info("Procent porażek (procent): " + (float) numberOfFailures/numberOfTests * 100);
         }
     }
 }
